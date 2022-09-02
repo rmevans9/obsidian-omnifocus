@@ -10,7 +10,8 @@ export async function updateNote(
   startPos: number,
   endPos: number,
   needle: string,
-  replace: string
+  replace: string,
+  markCompleted: boolean
 ) {
   if (!_app) {
     throw new Error("No app defined!");
@@ -40,6 +41,16 @@ export async function updateNote(
   newText = currentText.substring(0, startOfNeedle);
   newText += replace;
   newText += currentText.substring(startOfNeedle + needle.length);
+
+  if (markCompleted) {
+    // TODO: This could use a TON of optimization because we are rebuilding the text AGAIN!
+    const startOfCheckbox = newText.indexOf("[", startPos);
+    const prevStepText = newText;
+
+    newText = prevStepText.substring(0, startOfCheckbox + 1);
+    newText += "x";
+    newText += prevStepText.substring(startOfCheckbox + 2);
+  }
 
   // For debugging for now
   console.log("Original Text", currentText);

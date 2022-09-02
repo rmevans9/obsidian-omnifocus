@@ -30,12 +30,12 @@ export function fetchOmnifocusTaggedTasks() {
   }
 
   // TODO: Consider having the pages this a setting!
-  const pages = dataViewApi.pages("").values as ObisidianPage[];
+  const pages = dataViewApi.pages("#omnifocus").values as ObisidianPage[];
 
   const tasks = pages.reduce<ObsidianTask[]>((currTasks, page) => {
     const pageTasks = page.file.tasks.values.reduce<ObsidianTask[]>(
       (currPageTasks, task) => {
-        if (task.tags.indexOf("#omnifocus") > -1) {
+        if (!task.completed && task.tags.indexOf("#omnifocus") > -1) {
           currPageTasks.push(task);
         }
 

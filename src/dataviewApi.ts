@@ -26,7 +26,7 @@ export function fetchOmnifocusTaggedTasks() {
   const dataViewApi = getAPI();
 
   if (!dataViewApi) {
-    throw new Error("Dataview is not available!");
+    throw new Error("Dataview is not available. Check that you have installed the Dataview plugin: https://github.com/blacksmithgu/obsidian-dataview");
   }
 
   // TODO: Consider having the pages this a setting!

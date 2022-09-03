@@ -4,7 +4,7 @@ import OOOmnifocusApi from "./apis/omnifocus";
 import type ObsidianOmnifocus from "./main";
 import { Task } from "./Task";
 
-export default class SyncManager {
+export default class SyncApi {
   private _plugin: ObsidianOmnifocus;
   private _dataviewApi: OODataviewApi;
   private _obsidianApi: OOObsidianApi;

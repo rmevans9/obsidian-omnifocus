@@ -4,7 +4,7 @@ import OOObsidianApi from "./apis/obsidian";
 import OOOmnifocusApi from "./apis/omnifocus";
 
 import { DEFAULT_SETTINGS, ObsidianOmnifocusSettings } from "./settings";
-import SyncManager from "./SyncManager";
+import SyncApi from "./Sync";
 import { SettingsTab } from "./ui/SettingsTab";
 
 export default class ObsidianOmnifocus extends Plugin {
@@ -13,14 +13,14 @@ export default class ObsidianOmnifocus extends Plugin {
   dataviewApi: OODataviewApi;
   obsidianApi: OOObsidianApi;
   omnifocusApi: OOOmnifocusApi;
-  syncManager: SyncManager;
+  SyncApi: SyncApi;
 
   async onload() {
     // Create our APIs
     this.dataviewApi = new OODataviewApi(this);
     this.obsidianApi = new OOObsidianApi(this);
     this.omnifocusApi = new OOOmnifocusApi(this);
-    this.syncManager = new SyncManager(
+    this.SyncApi = new SyncApi(
       this,
       this.dataviewApi,
       this.obsidianApi,
@@ -35,7 +35,7 @@ export default class ObsidianOmnifocus extends Plugin {
     this.addCommand({
       id: "obsidian-omnifocus-sync",
       name: "Sync tagged tasks to OmniFocus",
-      callback: this.syncManager.syncTasks,
+      callback: this.SyncApi.syncTasks,
     });
   }
 

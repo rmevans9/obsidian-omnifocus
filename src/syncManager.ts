@@ -1,44 +1,76 @@
-import { createTask } from "@jacobx1/of-sdk";
-import { fetchOmnifocusTaggedTasks, ObsidianTask } from "./dataviewApi";
-import { updateNote } from "./obsidianApi";
-import { ObsidianOmnifocusSettings } from "./settings";
+import OODataviewApi from "./apis/dataview";
+import OOObsidianApi from "./apis/obsidian";
+import OOOmnifocusApi from "./apis/omnifocus";
+import type ObsidianOmnifocus from "./main";
+import { Task } from "./Task";
 
-async function createTaskAndUpdate(
-  vaultName: string,
-  task: ObsidianTask,
-  pluginSettings: ObsidianOmnifocusSettings
-) {
-  await createTask(task.text, {
-    note: `obsidian://open?vault=${encodeURI(vaultName)}&file=${encodeURI(
-      task.path
-    )}`,
-  });
+export default class SyncManager {
+  private _plugin: ObsidianOmnifocus;
+  private _dataviewApi: OODataviewApi;
+  private _obsidianApi: OOObsidianApi;
+  private _omnifocusApi: OOOmnifocusApi;
 
-  await updateNote(
-    task.path,
-    task.position.start.offset,
-    task.position.end.offset,
-    "#omnifocus ", // TODO: Pull in via setting?
-    "#omnifocus-synced ",
-    pluginSettings.markCompletedOnSync
-  );
-}
+  constructor(
+    plugin: ObsidianOmnifocus,
+    dataviewApi: OODataviewApi,
+    obsidianApi: OOObsidianApi,
+    omnifocusApi: OOOmnifocusApi
+  ) {
+    this._plugin = plugin;
+    this._dataviewApi = dataviewApi;
+    this._obsidianApi = obsidianApi;
+    this._omnifocusApi = omnifocusApi;
+  }
 
-export async function syncTasks(
-  vaultName: string,
-  pluginSettings: ObsidianOmnifocusSettings
-) {
-  // TODO: Consider if we should allow per page syncing of just do the entire vault?
-  console.log("[obsidian-omnifocus] Fetching Tagged Tasks...");
-  const tasks = fetchOmnifocusTaggedTasks();
-  console.log("[obsidian-omnifocus] Fetched Tagged Tasks.", tasks);
+  syncTasks = async () => {
+    const dataviewTasks = this._dataviewApi.fetchTaggedTasks();
+    const tasks = dataviewTasks.map(Task.fromDataviewTask);
+    const groupedTasks = tasks.reduce<Record<string, Task[]>>(
+      (groups, task) => {
+        // Create a group if it doesn't exist already
+        if (!groups[task.path]) {
+          groups[task.path] = [];
+        }
 
-  console.log("[obsidian-omnifocus] Iterating over tasks to send to Omni...");
-  const creationTasks: Promise<void>[] = [];
-  tasks.forEach((task) => {
-    creationTasks.push(createTaskAndUpdate(vaultName, task, pluginSettings));
-  });
-  console.log("[obsidian-omnifocus] Finished iterating over tasks.");
+        // Mark the task completed if the settings say to
+        if (this._plugin.settings.markCompletedOnSync) {
+          task.completed = true;
+        }
 
-  await Promise.all(creationTasks);
+        // Replace the sync tag with the synced tag
+        task.replaceTag(
+          this._plugin.settings.tagToSync,
+          this._plugin.settings.tagForSynced
+        );
+
+        // Ship the task to OmniFocus
+        this._omnifocusApi.createTask(task);
+
+        // Add this task the group based on the file it is in
+        groups[task.path].push(task);
+
+        return groups;
+      },
+      {}
+    );
+
+    const updateTasks: Promise<null>[] = Object.entries(groupedTasks).map(
+      ([filePath, tasks]) => {
+        return new Promise(async (resolve) => {
+          const fileContents = await this._obsidianApi.readFile(filePath);
+
+          tasks.forEach((task) => {
+            // Right now we have to pass in the existing line so we can find the amount of indentation that we need
+            fileContents[task.line] = task.toString(fileContents[task.line]);
+          });
+
+          await this._obsidianApi.writeFile(filePath, fileContents);
+
+          resolve(null);
+        });
+      }
+    );
+
+    await Promise.all(updateTasks);
+  };
 }

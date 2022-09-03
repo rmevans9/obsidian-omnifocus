@@ -1,24 +1,42 @@
-import { App, Plugin, PluginSettingTab, Setting } from "obsidian";
+import { Plugin } from "obsidian";
+import OODataviewApi from "./apis/dataview";
+import OOObsidianApi from "./apis/obsidian";
+import OOOmnifocusApi from "./apis/omnifocus";
 
-import { setApp } from "./obsidianApi";
 import { DEFAULT_SETTINGS, ObsidianOmnifocusSettings } from "./settings";
-import { syncTasks } from "./syncManager";
+import SyncManager from "./SyncManager";
+import { SettingsTab } from "./ui/SettingsTab";
 
 export default class ObsidianOmnifocus extends Plugin {
   settings: ObsidianOmnifocusSettings;
 
+  dataviewApi: OODataviewApi;
+  obsidianApi: OOObsidianApi;
+  omnifocusApi: OOOmnifocusApi;
+  syncManager: SyncManager;
+
   async onload() {
+    // Create our APIs
+    this.dataviewApi = new OODataviewApi(this);
+    this.obsidianApi = new OOObsidianApi(this);
+    this.omnifocusApi = new OOOmnifocusApi(this);
+    this.syncManager = new SyncManager(
+      this,
+      this.dataviewApi,
+      this.obsidianApi,
+      this.omnifocusApi
+    );
+
+    // Load up the settings
     await this.loadSettings();
+    this.addSettingTab(new SettingsTab(this.app, this));
 
-    setApp(this.app);
-
+    // Add the commands
     this.addCommand({
       id: "obsidian-omnifocus-sync",
       name: "Sync tagged tasks to OmniFocus",
-      callback: () => syncTasks(this.app.vault.getName(), this.settings),
+      callback: this.syncManager.syncTasks,
     });
-
-    this.addSettingTab(new ObsidianOmnifocusSettingTab(this.app, this));
   }
 
   async loadSettings() {
@@ -27,36 +45,5 @@ export default class ObsidianOmnifocus extends Plugin {
 
   async saveSettings() {
     await this.saveData(this.settings);
-  }
-}
-
-export class ObsidianOmnifocusSettingTab extends PluginSettingTab {
-  plugin: ObsidianOmnifocus;
-
-  constructor(app: App, plugin: ObsidianOmnifocus) {
-    super(app, plugin);
-    this.plugin = plugin;
-  }
-
-  display(): void {
-    const { containerEl } = this;
-
-    containerEl.empty();
-
-    containerEl.createEl("h2", { text: "Settings" });
-
-    new Setting(containerEl)
-      .setName("Mark task completed on sync?")
-      .setDesc(
-        "This will mark the task in Obsidian as completed when it is sync'd to OmniFocus"
-      )
-      .addToggle((toggle) => {
-        toggle
-          .setValue(this.plugin.settings.markCompletedOnSync)
-          .onChange(async (value) => {
-            this.plugin.settings.markCompletedOnSync = value;
-            await this.plugin.saveSettings();
-          });
-      });
   }
 }

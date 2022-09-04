@@ -38,6 +38,10 @@ export class Task {
     this.description += oldDescription.substring(indexOfOldTag + oldTag.length);
   }
 
+  public insertTag(tag: string) {
+    this.description = `${tag} ${this.description}`;
+  }
+
   public getObsidianLink(vaultName: string) {
     return `obsidian://open?vault=${encodeURI(vaultName)}&file=${encodeURI(
       this.path

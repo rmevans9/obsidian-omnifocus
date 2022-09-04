@@ -33,6 +33,7 @@ export default class OODataviewApi {
   }
 
   fetchTaggedTasks() {
+    const useTagForSelection = this._plugin.settings.useTagForSelection;
     const tagToSync = this._plugin.settings.tagToSync;
     const api = getAPI();
 
@@ -47,12 +48,12 @@ export default class OODataviewApi {
       return [];
     }
 
-    const pages = api.pages(tagToSync).values as DataviewPage[];
+    const pages = api.pages(useTagForSelection ? tagToSync : "").values as DataviewPage[];
 
     const tasks = pages.reduce<DataviewTask[]>((currTasks, page) => {
       const pageTasks = page.file.tasks.values.reduce<DataviewTask[]>(
         (currPageTasks, task) => {
-          if (!task.completed && task.tags.includes(tagToSync)) {
+          if (!task.completed && (task.tags.includes(tagToSync) || !useTagForSelection)) {
             currPageTasks.push(task);
           }
 

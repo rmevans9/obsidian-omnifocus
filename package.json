@@ -14,6 +14,7 @@
   "license": "MIT",
   "devDependencies": {
     "@faker-js/faker": "^7.5.0",
+    "@jacobx1/of-types": "^0.2.7",
     "@types/jest": "^29.0.0",
     "@types/node": "^16.11.6",
     "@typescript-eslint/eslint-plugin": "5.29.0",

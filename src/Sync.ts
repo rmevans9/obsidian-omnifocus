@@ -38,10 +38,14 @@ export default class SyncApi {
         }
 
         // Replace the sync tag with the synced tag
-        task.replaceTag(
-          this._plugin.settings.tagToSync,
-          this._plugin.settings.tagForSynced
-        );
+        if (this._plugin.settings.useTagForSelection) {
+          task.replaceTag(
+            this._plugin.settings.tagToSync,
+            this._plugin.settings.tagForSynced
+          );
+        } else {
+          task.insertTag(this._plugin.settings.tagForSynced);
+        }
 
         // Ship the task to OmniFocus
         this._omnifocusApi.createTask(task);

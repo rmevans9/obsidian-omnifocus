@@ -17,8 +17,12 @@ export default class OOOmnifocusApi {
   }
 
   async createTask(task: Task) {
+    const linkGenerator = this._plugin.settings.useAdvancedUri
+      ? task.getAdvancedObsidianLink
+      : task.getObsidianLink;
+
     await createTask(task.toOmniString(this._plugin.settings.tagForSynced), {
-      note: task.getObsidianLink(this._plugin.app.vault.getName()),
+      note: linkGenerator(this._plugin.app.vault.getName()),
     });
   }
 

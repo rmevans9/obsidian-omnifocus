@@ -48,6 +48,12 @@ export class Task {
     )}`;
   }
 
+  public getAdvancedObsidianLink(vaultName: string) {
+    return `obsidian://advanced-uri?vault=${encodeURI(
+      vaultName
+    )}&filepath=${encodeURI(this.path)}&line=${this.line + 1}`;
+  }
+
   public toOmniString(syncedTag: string) {
     return this.description.replace(syncedTag, "").trim();
   }

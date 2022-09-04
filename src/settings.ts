@@ -3,6 +3,7 @@ export interface ObsidianOmnifocusSettings {
   tagForSynced: string;
   useTagForSelection: boolean;
   markCompletedOnSync: boolean;
+  useAdvancedUri: boolean;
 }
 
 export const DEFAULT_SETTINGS: ObsidianOmnifocusSettings = {
@@ -10,4 +11,5 @@ export const DEFAULT_SETTINGS: ObsidianOmnifocusSettings = {
   tagForSynced: "#omnifocus-synced",
   useTagForSelection: true,
   markCompletedOnSync: false,
+  useAdvancedUri: false,
 };
